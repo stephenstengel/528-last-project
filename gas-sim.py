@@ -12,16 +12,37 @@ import numpy
 import matplotlib.pyplot as plt
 import random
 import math
+import os
+
 
 def main(args):
 	print("Hi!")
 	
+	print("Clearing old plots...")
+	plotsFolder = "../frames/"
+	videoFolder = "../video/"
+	
+	os.system("rm " + plotsFolder + "*.png")
+	print("Done!")
+	
 	numpy.random.seed(3)
 	
+	# ~ xlow = -10000
+	# ~ xhigh = 10000
+	# ~ ylow = -10000
+	# ~ yhigh = 10000
+	# ~ xlow = -1000
+	# ~ xhigh = 1000
+	# ~ ylow = -1000
+	# ~ yhigh = 1000
 	xlow = -100
 	xhigh = 100
 	ylow = -100
 	yhigh = 100
+	# ~ xlow = -50
+	# ~ xhigh = 50
+	# ~ ylow = -100
+	# ~ yhigh = 100
 	# ~ xlow = -10
 	# ~ xhigh = 10
 	# ~ ylow = -10
@@ -35,10 +56,16 @@ def main(args):
 	ysize = abs( yhigh - ylow )
 	
 	# ~ numpoints = 10000
-	numpoints = 100
+	numpoints = 1000
+	# ~ numpoints = 100
 	# ~ numpoints = 10
 	
-	numSteps = 100000
+	# ~ numSteps = 100000
+	# ~ numSteps = 50000
+	numSteps = 30000
+	numFrames = 30
+	stepSizeGraphing = numSteps // numFrames + 1
+	
 	
 	#Get xhigh up to wall
 	wallstop = getxhighAbutment(xsize, xlow)
@@ -59,7 +86,10 @@ def main(args):
 	# ~ print(xpositions)
 	# ~ print(ypositions)
 	
-	simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize)
+	simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize, stepSizeGraphing, plotsFolder)
+	
+	
+	createAnimations(plotsFolder, videoFolder)
 	
 	return 0
 
@@ -109,15 +139,18 @@ def createWallArray(xsize, ysize, xlow, xhigh, ylow, yhigh):
 
 #Returns the y partition points for the wall.
 def yPartitions(ysize, ylow):
-	yFirstThird = (ysize // 3) + ylow
-	ySecondThird = ((ysize * 2) // 3) + ylow
+	# ~ yFirstThird = (ysize // 3) + ylow
+	# ~ ySecondThird = ((ysize * 2) // 3) + ylow
+	
+	yFirstThird = ((4 * ysize) // 10) + ylow
+	ySecondThird = ((ysize * 6) // 10) + ylow
 	
 	return yFirstThird, ySecondThird
 
 #runs the simulation for some number of steps.
-def simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize):
+def simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize, stepSizeGraph, plotsFolder):
 	#print initial condition
-	printSimulation(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, 0)
+	printSimulation(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, 0, plotsFolder)
 	
 	movesArray = numpy.random.randint(1, 5, size=(numSteps, len(xpositions)))
 	
@@ -143,8 +176,8 @@ def simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhi
 		xpositions, ypositions = fixInWall(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize)
 		
 		#print updated field
-		if step % 10000 == 0:
-			printSimulation(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, step)
+		if step % stepSizeGraph == 0:
+			printSimulation(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, step, plotsFolder)
 
 
 #Moves points to a good position if they impact walls.
@@ -193,7 +226,7 @@ def fixInWall(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow,
 	return xpositions, ypositions
 
 
-def printSimulation(xArray, yArray, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, currentStep):
+def printSimulation(xArray, yArray, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, currentStep, plotsFolder):
 	plt.title("Simulation of gas with wall: time = " + str(currentStep))
 	plt.xlabel("x")
 	plt.ylabel("y")
@@ -202,12 +235,29 @@ def printSimulation(xArray, yArray, xwallArray, ywallArray, xlow, xhigh, ylow, y
 	plt.xlim(xlow, xhigh)
 	plt.ylim(ylow, yhigh)
 	
-	plt.show()
+	# ~ plt.show()
 	
-	# ~ fileName = "{}plot{:03}.png".format(plotsFolder, currentStep)
-	# ~ plt.savefig(fileName)
+	fileName = "{}plot{:05}.png".format(plotsFolder, currentStep)
+	plt.savefig(fileName)
 	
 	plt.clf()
+
+
+#Creates the animation from the saved files.
+def createAnimations(plotsFolder, outputFolder):
+	#This compresses the .pngs
+	#os.system("optipng " + plotsFolder + "*.png")
+	
+	delay = 5
+	
+	print("Combining into an .mkv...")
+	os.system("convert -delay " + str(delay) + " " + plotsFolder + "*.png " + outputFolder + "output.mkv")
+	
+	print("Combining into an .mp4...")
+	os.system("convert -delay " + str(delay) + " " + plotsFolder + "*.png " + outputFolder + "output.mp4")
+	
+	print("Combining into a .gif...")
+	os.system("convert -delay " + str(delay) + " " + plotsFolder + "*.png " + outputFolder + "output.gif")
 
 
 if __name__ == '__main__':
