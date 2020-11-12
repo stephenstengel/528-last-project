@@ -21,8 +21,8 @@ def main(args):
 	print("Clearing old plots...")
 	plotsFolder = "../frames/"
 	videoFolder = "../video/"
-	
 	os.system("rm " + plotsFolder + "*.png")
+	os.system("rm " + videoFolder + "output*")
 	print("Done!")
 	
 	numpy.random.seed(3)
@@ -56,7 +56,8 @@ def main(args):
 	ysize = abs( yhigh - ylow )
 	
 	# ~ numpoints = 10000
-	numpoints = 1000
+	numpoints = 5000 #This is good one
+	# ~ numpoints = 1000
 	# ~ numpoints = 100
 	# ~ numpoints = 10
 	
@@ -76,20 +77,15 @@ def main(args):
 	xpositions = numpy.random.randint(xlow, wallstop, numpoints)
 	ypositions = numpy.random.randint(ylow, yhigh + 1, numpoints)
 	
-	# ~ hackx = []
-	# ~ for i in range(numpoints):
-		# ~ hackx.append(random.randint(xlow, wallstop))
-	# ~ xpositions = numpy.array(hackx)
-	
 	xwallArray, ywallArray = createWallArray(xsize, ysize, xlow, xhigh, ylow, yhigh)
 	
-	# ~ print(xpositions)
-	# ~ print(ypositions)
-	
+	print("Simulating...")
 	simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize, stepSizeGraphing, plotsFolder)
+	print("Done")
 	
-	
+	print("Creating videos...")
 	createAnimations(plotsFolder, videoFolder)
+	print("Done!")
 	
 	return 0
 
@@ -142,8 +138,11 @@ def yPartitions(ysize, ylow):
 	# ~ yFirstThird = (ysize // 3) + ylow
 	# ~ ySecondThird = ((ysize * 2) // 3) + ylow
 	
-	yFirstThird = ((4 * ysize) // 10) + ylow
-	ySecondThird = ((ysize * 6) // 10) + ylow
+	# ~ yFirstThird = ((48 * ysize) // 100) + ylow
+	# ~ ySecondThird = ((ysize * 52) // 100) + ylow
+	
+	yFirstThird = ((0 * ysize) // 100) + ylow
+	ySecondThird = ((ysize * 10) // 100) + ylow
 	
 	return yFirstThird, ySecondThird
 
@@ -160,19 +159,13 @@ def simulate(numSteps, xpositions, ypositions, xwallArray, ywallArray, xlow, xhi
 	WEST = 4
 	
 	for step in range(1, numSteps):
-		# ~ print(movesArray[step])
 		#random walk the arrays.
-		# ~ print("xpos b4 west")
-		# ~ print(xpositions)
 		xpositions -= numpy.where(movesArray[step] == WEST, 1, 0)
-		# ~ print("xpos after west")
-		# ~ print(xpositions)
-		
 		xpositions += numpy.where(movesArray[step] == EAST, 1, 0)
 		ypositions += numpy.where(movesArray[step] == NORTH, 1, 0)
 		ypositions -= numpy.where(movesArray[step] == SOUTH, 1, 0)
 		
-		#fix error points.
+		#fix erroneous points.
 		xpositions, ypositions = fixInWall(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow, yhigh, ysize)
 		
 		#print updated field
@@ -194,13 +187,10 @@ def fixInWall(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow,
 		elif ypositions[i] > yhigh:
 			ypositions[i] = yhigh
 	
-	#fix wall collision
 	#get wall coords
 	leftSideWall = math.inf
 	rightSideWall = -math.inf
-	
 	yFirstThird, ySecondThird = yPartitions(ysize, ylow) #move up functions and pass?
-	
 	
 	for i in range(len(xwallArray)):#move up functions loops
 		if xwallArray[i] < leftSideWall:
@@ -210,18 +200,15 @@ def fixInWall(xpositions, ypositions, xwallArray, ywallArray, xlow, xhigh, ylow,
 	
 	#for each xy coord,
 	for i in range(len(xpositions)):
-		# ~ #If at a wall place
-		# ~ #left
+		#left
 		if xpositions[i] == leftSideWall:
 			#if not in free middle third y section.
 			if ypositions[i] <= yFirstThird or ypositions[i] >= ySecondThird:
 				xpositions[i] -= 1
-		
 		#right
 		elif xpositions[i] == rightSideWall:
 			if ypositions[i] <= yFirstThird or ypositions[i] >= ySecondThird:
 				xpositions[i] += 1
-		
 	
 	return xpositions, ypositions
 
